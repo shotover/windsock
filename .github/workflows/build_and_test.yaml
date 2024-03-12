@@ -1,0 +1,106 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Cancel already running jobs
+concurrency:
+  group: build_and_test_${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build_check_and_upload:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Build Release
+            runner: ubuntu-20.04
+            cargo_flags: --release
+            profile: release
+
+          - name: Build Debug
+            runner: ubuntu-20.04
+            cargo_flags:
+            profile: debug
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: Swatinem/rust-cache@v2
+      with:
+        # rust-cache already handles all the sane defaults for caching rust builds.
+        # However because we are running seperate debug/release builds in parallel,
+        # we also need to add the runner and cargo_flags to the key so that a seperate cache is used.
+        # Otherwise only the last build to finish would get saved to the cache.
+        # We allow different test_flags to share a cache as they should have identical build outputs
+        key: ${{ matrix.runner }} - ${{ matrix.cargo_flags }}
+        # this line means that only the main branch writes to the cache
+        # benefits:
+        # * prevents main branch caches from being evicted in favor of a PR cache
+        # * saves about 1min per workflow by skipping the actual cache write
+        # downsides:
+        # * PRs that update rust version or changes deps will be slow to iterate on due to changes not being cached.
+        save-if: ${{ github.ref == 'refs/heads/main' }}
+    - name: Install nextest
+      uses: taiki-e/install-action@v2
+      with:
+        tool: nextest@0.9.57
+    - name: Build tests
+      run: |
+        cargo test --doc ${{ matrix.cargo_flags }} --all-features -- --show-output --nocapture
+        cargo nextest archive --archive-file nextest-${{ matrix.profile }}.tar.zst ${{ matrix.cargo_flags }} --all-features --all-targets
+    - name: Upload built tests to workflow
+      uses: actions/upload-artifact@v4
+      with:
+        name: nextest-${{ matrix.profile }}
+        path: nextest-${{ matrix.profile }}.tar.zst
+    - name: Cleanup archive
+      run: rm nextest-${{ matrix.profile }}.tar.zst
+    - name: Ensure that tests did not create or modify any files that arent .gitignore'd
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git status
+          exit 1
+        fi
+
+  run_tests_partitioned:
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        profile: ["release", "debug"]
+    name: Test ${{ matrix.profile}} ${{ matrix.partition }}/15
+    runs-on: ubuntu-latest
+    needs: build_check_and_upload
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install nextest
+      uses: taiki-e/install-action@v2
+      with:
+        tool: nextest@0.9.57
+    - run: mkdir -p ~/.cargo/bin
+    - name: Download archive
+      uses: actions/download-artifact@v4
+      with:
+        name: nextest-${{ matrix.profile }}
+    - name: Run tests
+      run: |
+        ~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-${{ matrix.profile }}.tar.zst \
+          --partition count:${{ matrix.partition }}/15 --extract-to . --run-ignored all
+    - name: Cleanup archive
+      run: rm nextest-${{ matrix.profile }}.tar.zst
+    - name: Ensure that tests did not create or modify any files that arent .gitignore'd
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git status
+          exit 1
+        fi

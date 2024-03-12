@@ -14,7 +14,6 @@ What windsock does:
   * Query available benchmarks
   * Selectively run benchmarks
   * Process benchmark results into readable tables
-* Generates a webpage from which you can explore graphed results
 
 Windsock is suitable for:
 
@@ -27,7 +26,7 @@ Windsock is suitable for:
 To use windsock create a rust crate that imports windsock:
 
 ```toml
-windsock = { git = "https://github.com/shotover/shotover-proxy" }
+windsock = { git = "https://github.com/shotover/windsock" }
 ```
 
 And then implement the crate like this (simplified):
