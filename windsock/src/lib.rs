@@ -24,6 +24,7 @@ use filter::Filter;
 use std::process::exit;
 use tokio::runtime::Runtime;
 
+/// Takes control of your application, providing a CLI into your benchmarks.
 pub struct Windsock<ResourcesRequired, Resources> {
     benches: Vec<BenchState<ResourcesRequired, Resources>>,
     cloud: Box<dyn Cloud<CloudResourcesRequired = ResourcesRequired, CloudResources = Resources>>,
