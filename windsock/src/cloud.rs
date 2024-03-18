@@ -1,8 +1,11 @@
+//! create, manage and destroy cloud resources
+
 use std::path::Path;
 
 use async_trait::async_trait;
 
 /// Implement this to give windsock some control over your cloud.
+///
 /// Currently the only thing windsock needs is the ability to cleanup resources since resource creation should happen within your own benches.
 #[async_trait(?Send)]
 pub trait Cloud {
@@ -70,9 +73,10 @@ pub trait Cloud {
     }
 }
 
-pub struct BenchInfo<CloudResourceRequest> {
+/// Defines the cloud resources required by a specific bench
+pub struct BenchInfo<CloudResourceRequired> {
     pub name: String,
-    pub resources: CloudResourceRequest,
+    pub resources: CloudResourceRequired,
 }
 
 /// A dummy cloud instance for when the user isnt using windsock cloud functionality

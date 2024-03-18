@@ -844,6 +844,9 @@ struct Measurement {
     color: Color,
 }
 
+/// Defines wether a change in results is good or bad.
+///
+/// When comparing bench results in a table this is used to highlight good and bad results.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum Goal {
     BiggerIsBetter,

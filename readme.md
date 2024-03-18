@@ -19,14 +19,13 @@ Windsock is suitable for:
 
 * Iteratively testing performance during development of a database or service (for microbenchmarks you will need a different tool though)
 * Investigating performance of different workloads on a database you intend to use.
-* Generating a webpage of graphs to show off the performance of your released database. (not yet implemented)
 
 ## Define benches
 
 To use windsock create a rust crate that imports windsock:
 
 ```toml
-windsock = { git = "https://github.com/shotover/windsock" }
+windsock = "0.1"
 ```
 
 And then implement the crate like this (simplified):
@@ -136,8 +135,6 @@ Measurements ══════════════════════�
 
 TODO: make this into a comparison to make it more flashy and use an image to include the coloring
 
-and graphs: TODO
-
 ## How to perform various tasks in windsock
 
 ### Just run every bench
@@ -197,7 +194,7 @@ and graphs: TODO
 
 ### Generate graph webpage
 
-TODO: not yet implemented
+TODO: planned, but not implemented
 
 ```shell
 > cargo windsock local-run # run all benches
