@@ -112,6 +112,7 @@ impl<ResourcesRequired, Resources> BenchState<ResourcesRequired, Resources> {
 }
 
 /// Implement this to define your benchmarks
+///
 /// A single implementation of `Bench` can represent multiple benchmarks by initializing it multiple times with different state that returns unique tags.
 #[async_trait]
 pub trait Bench {
@@ -213,6 +214,7 @@ fn run_args_vec(name_and_resources: String, bench_parameters: &BenchParameters) 
     args
 }
 
+/// Instructs the benches on how the bench should be run according to the users request.
 pub struct BenchParameters {
     pub runtime_seconds: u32,
     pub operations_per_second: Option<u64>,
@@ -227,6 +229,7 @@ impl BenchParameters {
     }
 }
 
+/// Instructs the benches to activate different profilers on the users request.
 pub struct Profiling {
     pub results_path: PathBuf,
     pub profilers_to_use: Vec<String>,
@@ -283,6 +286,7 @@ impl Tags {
 }
 
 /// An optional helper trait for defining benchmarks.
+///
 /// Usually you have an async rust DB driver that you need to call across multiple tokio tasks
 /// This helper will spawn these tasks and send the required `Report::QueryCompletedIn`.
 ///

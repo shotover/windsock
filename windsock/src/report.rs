@@ -6,6 +6,9 @@ use strum::{EnumCount, EnumIter, IntoEnumIterator};
 use time::OffsetDateTime;
 use tokio::sync::mpsc::UnboundedReceiver;
 
+/// An individual measurement reported to windsock.
+///
+/// These will be collected, analyzed and then turned into a ReportArchive at the conclusion of the bench run.
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Report {
     /// Indicates the warmup is over and the benchmark has begun.
@@ -54,6 +57,7 @@ pub enum Report {
     ExternalBenchmark(Box<ExternalReport>),
 }
 
+/// Defines bench results that occured entirely outside of windsock.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ExternalReport {
     pub bench_started_at: OffsetDateTime,
@@ -125,6 +129,7 @@ impl Percentile {
 
 pub type Percentiles = [Duration; Percentile::COUNT];
 
+/// The entire results of a single benchmark run.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ReportArchive {
     pub(crate) running_in_release: bool,
@@ -137,6 +142,7 @@ pub struct ReportArchive {
     pub info_messages: Vec<String>,
 }
 
+/// The operation results of a benchmark run.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct OperationsReport {
     pub total: u64,
@@ -149,6 +155,7 @@ pub struct OperationsReport {
     pub total_each_second: Vec<u64>,
 }
 
+/// The pubsub results of a benchmark run.
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct PubSubReport {
     pub total_produce: u64,
@@ -168,6 +175,7 @@ pub struct PubSubReport {
     pub backlog_each_second: Vec<i64>,
 }
 
+/// Extra metrics that can be inserted into bench results.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Metric {
     Total {
@@ -186,6 +194,7 @@ pub enum Metric {
     },
 }
 
+/// Latency metrics that can be included in [`Metric::LatencyPercentiles`]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LatencyPercentile {
     pub quantile: String,
