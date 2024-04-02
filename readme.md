@@ -1,6 +1,17 @@
 # Windsock - A DB benchmarking framework
 
-Windsock is a generic DB benchmarking framework.
+[![Crates.io](https://img.shields.io/crates/v/windsock.svg)](https://crates.io/crates/windsock)
+[![Docs](https://docs.rs/windsock/badge.svg)](https://docs.rs/windsock)
+[![dependency status](https://deps.rs/repo/github/shotover/windsock/status.svg)](https://deps.rs/repo/github/shotover/windsock)
+
+<p align="left">
+  <img width="500px" alt="Shotover logo" src="https://github.com/shotover/windsock/blob/example_image/example.png">
+</p>
+
+Windsock is suitable for:
+
+* Iteratively testing performance during development of a database or service (use a different tool for microbenchmarks)
+* Investigating performance of different workloads on a database you intend to use.
 
 What you do:
 
@@ -12,23 +23,43 @@ What windsock does:
 
 * Provides a CLI from which you can:
   * Query available benchmarks
-  * Selectively run benchmarks
+  * Run benchmarks matching specific tags.
+    * windsock can automatically or manually setup and cleanup required cloud resources
   * Process benchmark results into readable tables
+    * Baselines can be set and then compared against
 
-Windsock is suitable for:
+## Add windsock benches to your project
 
-* Iteratively testing performance during development of a database or service (for microbenchmarks you will need a different tool though)
-* Investigating performance of different workloads on a database you intend to use.
+### 1
 
-## Define benches
-
-To use windsock create a rust crate that imports windsock:
+Import windsock and setup a cargo bench for windsock:
 
 ```toml
+[dev-dependencies]
 windsock = "0.1"
+
+[[bench]]
+name = "windsock"
+harness = false
 ```
 
-And then implement the crate like this (simplified):
+All windsock benchmarks should go into this one bench.
+
+### 2
+
+Setup a shortcut to run windsock in `.cargo/config.toml`:
+
+```toml
+[alias]
+windsock = "test --release --bench windsock --"
+windsock-debug = "test --bench windsock --"
+```
+
+This allows us to run `cargo windsock` instead of `cargo --test --release --bench windsock --`.
+
+### 3
+
+Then at `benches/windsock` create a benchmark like this (simplified):
 
 ```rust
 fn main() {
@@ -100,42 +131,9 @@ impl BenchTask for BenchTaskCassandra {
 }
 ```
 
-**TODO:** document running windsock as both a standalone crate and as a cargo bench.
+This example is simplified for demonstration purposes, refer to `windsock/benches/windsock` in this repo for a full working example.
 
-This example is simplified for demonstration purposes, refer to `examples/cassandra.rs` for a full working example.
-
-## Running benches
-
-Then we run our crate to run the benchmarks and view results like:
-
-```none
-> cargo windsock run-local
-... benchmark running logs
-> cargo windsock results
-Results for cassandra
-           topology   ──single ─cluster3
-Measurements ═══════════════════════════
-   Operations Total     750762    372624
- Operations Per Sec      83418     41403
-             Min       0.255ms   0.229ms
-               1       0.389ms   0.495ms
-               2       0.411ms   0.571ms
-               5       0.460ms   0.714ms
-              10       0.567ms   0.876ms
-              25       1.131ms   1.210ms
-              50       1.306ms   1.687ms
-              75       1.519ms   2.600ms
-              90       1.763ms   4.881ms
-              95       2.132ms   7.542ms
-              98       2.588ms  14.008ms
-              99       2.951ms  19.297ms
-              99.9     7.952ms  40.896ms
-              99.99   25.559ms  80.692ms
-```
-
-TODO: make this into a comparison to make it more flashy and use an image to include the coloring
-
-## How to perform various tasks in windsock
+## How to perform various tasks in `cargo windsock` CLI
 
 ### Just run every bench
 

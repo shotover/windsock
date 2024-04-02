@@ -1,0 +1,3 @@
+[alias]
+windsock = "test --release --bench windsock --"
+windsock-debug = "test --bench windsock --"

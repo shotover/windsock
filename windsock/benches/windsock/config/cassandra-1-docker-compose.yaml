@@ -1,8 +1,6 @@
-version: "3.3"
-
 networks:
-  cassandra_subnet:
-    name: cassandra_subnet
+  cluster_subnet:
+    name: cluster_subnet
     driver: bridge
     ipam:
       driver: default
@@ -12,15 +10,16 @@ networks:
 
 services:
   cassandra-one:
-    image: bitnami/cassandra:4.0.6
+    image: &image shotover/cassandra-test:4.0.6-r1
     networks:
-      cassandra_subnet:
+      cluster_subnet:
         ipv4_address: 172.16.1.2
-    environment:
-      &environment
+    environment: &environment
       MAX_HEAP_SIZE: "400M"
       MIN_HEAP_SIZE: "400M"
       HEAP_NEWSIZE: "48M"
     volumes:
-      - type: tmpfs
+      # Using volume instead of tmpfs adds 3 seconds to the runtime of the cassandra standard_test_suite but allows running tests that restart nodes
+      &volumes
+      - type: volume
         target: /var/lib/cassandra

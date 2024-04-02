@@ -1,38 +1,45 @@
+use crate::docker_compose::docker_compose;
 use anyhow::Result;
 use async_trait::async_trait;
-use docker_compose_runner::{DockerCompose, Image};
 use scylla::SessionBuilder;
 use scylla::{transport::Compression, Session};
 use std::{
     collections::HashMap,
-    path::Path,
     sync::Arc,
     time::{Duration, Instant},
 };
 use tokio::sync::mpsc::UnboundedSender;
-use windsock::cloud::NoCloud;
-use windsock::{Bench, BenchParameters, BenchTask, Profiling, Report, Windsock};
+use windsock::{Bench, BenchParameters, BenchTask, Profiling, Report};
 
-fn main() {
-    set_working_dir();
-    Windsock::new(
-        vec![
-            Box::new(CassandraBench::new(Some(Compression::Lz4))),
-            Box::new(CassandraBench::new(None)),
-        ],
-        NoCloud::new_boxed(),
-        &["release"],
-    )
-    .run();
+#[derive(Clone, Copy)]
+pub enum Topology {
+    Single,
+    Cluster3,
 }
 
-struct CassandraBench {
+impl Topology {
+    pub fn to_tag(self) -> (String, String) {
+        (
+            "topology".to_owned(),
+            match self {
+                Topology::Single => "single".to_owned(),
+                Topology::Cluster3 => "cluster3".to_owned(),
+            },
+        )
+    }
+}
+
+pub struct CassandraBench {
     compression: Option<Compression>,
+    topology: Topology,
 }
 
 impl CassandraBench {
-    fn new(compression: Option<Compression>) -> Self {
-        CassandraBench { compression }
+    pub fn new(compression: Option<Compression>, topology: Topology) -> Self {
+        CassandraBench {
+            compression,
+            topology,
+        }
     }
 }
 
@@ -42,8 +49,9 @@ impl Bench for CassandraBench {
     type CloudResources = ();
     fn tags(&self) -> HashMap<String, String> {
         [
-            ("name".to_owned(), "cassandra".to_owned()),
-            ("topology".to_owned(), "single".to_owned()),
+            ("db".to_owned(), "cassandra".to_owned()),
+            ("topology".to_owned(), "1".to_owned()),
+            self.topology.to_tag(),
             ("message_type".to_owned(), "write1000bytes".to_owned()),
             (
                 "compression".to_owned(),
@@ -74,7 +82,8 @@ impl Bench for CassandraBench {
         _profiling: Profiling,
         parameters: BenchParameters,
     ) -> Result<()> {
-        let _docker_compose = docker_compose("examples/cassandra-docker-compose.yaml");
+        let _docker_compose =
+            docker_compose("benches/windsock/config/cassandra-1-docker-compose.yaml");
         let address = "127.0.0.1:9042";
 
         self.execute_run(address, &parameters).await;
@@ -139,25 +148,4 @@ impl BenchTask for BenchTaskCassandra {
             .map_err(|err| format!("{err:?}"))
             .map(|_| ())
     }
-}
-
-fn docker_compose(file_path: &str) -> DockerCompose {
-    DockerCompose::new(&IMAGE_WAITERS, |_| {}, file_path)
-}
-
-static IMAGE_WAITERS: [Image; 1] = [Image {
-    name: "bitnami/cassandra:4.0.6",
-    log_regex_to_wait_for: r"Startup complete",
-    timeout: Duration::from_secs(120),
-}];
-
-fn set_working_dir() {
-    // tests and benches will set the directory to the directory of the crate, we are acting as a benchmark so we do the same
-    std::env::set_current_dir(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .unwrap()
-            .join(env!("CARGO_PKG_NAME")),
-    )
-    .unwrap();
 }
