@@ -36,8 +36,14 @@ pub enum Report {
         completed_in: Duration,
         message: String,
     },
-    /// Indicates a pubsub consume response comes back from the service.
-    ConsumeCompleted,
+
+    /// Indicates a pubsub consume response came back from the service.
+    /// The Duration should be the time between the initial produce request being created on a client and the response being consumed on a client.
+    /// It is suggested that a timestamp be encoded in the payload of the produce to achieve this.
+    ///
+    /// For payload sizes where a timestamp can not fit set the Duration to None.
+    /// However: Do not mix None and Some results in a single bench run.
+    ConsumeCompletedIn(Option<Duration>),
 
     /// Indicates pubsub consume error response came back from the service.
     ConsumeErrored { message: String },
@@ -150,7 +156,7 @@ pub struct OperationsReport {
     pub requested_operations_per_second: Option<u64>,
     pub total_operations_per_second: u32,
     pub total_errors_per_second: u32,
-    pub mean_time: Duration,
+    pub mean_time: Option<Duration>,
     pub time_percentiles: Percentiles,
     pub total_each_second: Vec<u64>,
 }
@@ -166,9 +172,11 @@ pub struct PubSubReport {
     pub requested_produce_per_second: Option<u64>,
     pub produce_per_second: u32,
     pub produce_errors_per_second: u32,
+    pub consume_mean_time: Option<Duration>,
+    pub consume_time_percentiles: Percentiles,
     pub consume_per_second: u32,
     pub consume_errors_per_second: u32,
-    pub produce_mean_time: Duration,
+    pub produce_mean_time: Option<Duration>,
     pub produce_time_percentiles: Percentiles,
     pub produce_each_second: Vec<u64>,
     pub consume_each_second: Vec<u64>,
@@ -369,8 +377,10 @@ pub(crate) async fn report_builder(
     let mut operations_report = None;
     let mut operation_times = vec![];
     let mut produce_times = vec![];
+    let mut consume_times = vec![];
     let mut total_operation_time = Duration::from_secs(0);
     let mut total_produce_time = Duration::from_secs(0);
+    let mut total_consume_time = Duration::from_secs(0);
     let mut error_messages = vec![];
     let mut info_messages = vec![];
 
@@ -427,11 +437,15 @@ pub(crate) async fn report_builder(
                     total_produce_time += completed_in;
                 }
             }
-            Report::ConsumeCompleted => {
+            Report::ConsumeCompletedIn(duration) => {
                 let report = pubsub_report.get_or_insert_with(PubSubReport::default);
                 if started.is_some() {
                     report.total_backlog -= 1;
                     report.total_consume += 1;
+                    if let Some(duration) = duration {
+                        total_consume_time += duration;
+                        consume_times.push(duration);
+                    }
                     match report.consume_each_second.last_mut() {
                         Some(last) => *last += 1,
                         None => report.consume_each_second.push(0),
@@ -503,6 +517,7 @@ pub(crate) async fn report_builder(
         if let Some(report) = pubsub_report.as_mut() {
             report.requested_produce_per_second = requested_ops;
             report.produce_mean_time = mean_time(&produce_times, total_produce_time);
+            report.consume_mean_time = mean_time(&consume_times, total_consume_time);
             report.produce_per_second = calculate_ops(report.total_produce, finished_in);
             report.produce_errors_per_second =
                 calculate_ops(report.total_produce_error, finished_in);
@@ -510,6 +525,7 @@ pub(crate) async fn report_builder(
             report.consume_errors_per_second =
                 calculate_ops(report.total_consume_error, finished_in);
             report.produce_time_percentiles = calculate_percentiles(produce_times);
+            report.consume_time_percentiles = calculate_percentiles(consume_times);
 
             // This is not a complete result so discard it.
             report.produce_each_second.pop();
@@ -531,11 +547,11 @@ pub(crate) async fn report_builder(
     archive
 }
 
-fn mean_time(times: &[Duration], total_time: Duration) -> Duration {
+fn mean_time(times: &[Duration], total_time: Duration) -> Option<Duration> {
     if !times.is_empty() {
-        total_time / times.len() as u32
+        Some(total_time / times.len() as u32)
     } else {
-        Duration::from_secs(0)
+        None
     }
 }
 
