@@ -53,7 +53,7 @@ jobs:
     - name: Install nextest
       uses: taiki-e/install-action@v2
       with:
-        tool: nextest@0.9.57
+        tool: nextest@0.9.78
     - name: Build tests
       run: |
         cargo test --doc ${{ matrix.cargo_flags }} --all-features -- --show-output --nocapture
@@ -86,7 +86,7 @@ jobs:
     - name: Install nextest
       uses: taiki-e/install-action@v2
       with:
-        tool: nextest@0.9.57
+        tool: nextest@0.9.78
     - run: mkdir -p ~/.cargo/bin
     - name: Download archive
       uses: actions/download-artifact@v4
