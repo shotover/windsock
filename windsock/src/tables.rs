@@ -249,8 +249,11 @@ fn base(reports: &[ReportColumn], table_type: &str) {
         rows.push(Row::measurements(reports, "Opn Time Mean", |report| {
             report.operations_report.as_ref().map(|report| {
                 (
-                    report.mean_time.as_secs_f64(),
-                    duration_ms(report.mean_time),
+                    report
+                        .mean_time
+                        .map(|x| x.as_secs_f64())
+                        .unwrap_or_default(),
+                    duration_ms_opt(report.mean_time),
                     Goal::SmallerIsBetter,
                 )
             })
@@ -416,8 +419,23 @@ fn base(reports: &[ReportColumn], table_type: &str) {
         rows.push(Row::measurements(reports, "Produce Time Mean", |report| {
             report.pubsub_report.as_ref().map(|report| {
                 (
-                    report.produce_mean_time.as_secs_f64(),
-                    duration_ms(report.produce_mean_time),
+                    report
+                        .produce_mean_time
+                        .map(|x| x.as_secs_f64())
+                        .unwrap_or_default(),
+                    duration_ms_opt(report.produce_mean_time),
+                    Goal::SmallerIsBetter,
+                )
+            })
+        }));
+        rows.push(Row::measurements(reports, "Consume Time Mean", |report| {
+            report.pubsub_report.as_ref().map(|report| {
+                (
+                    report
+                        .consume_mean_time
+                        .map(|x| x.as_secs_f64())
+                        .unwrap_or_default(),
+                    duration_ms_opt(report.consume_mean_time),
                     Goal::SmallerIsBetter,
                 )
             })
@@ -430,6 +448,19 @@ fn base(reports: &[ReportColumn], table_type: &str) {
                     (
                         report.produce_time_percentiles[i].as_secs_f64(),
                         duration_ms(report.produce_time_percentiles[i]),
+                        Goal::SmallerIsBetter,
+                    )
+                })
+            }));
+        }
+
+        rows.push(Row::Heading("Consume Time Percentiles".to_owned()));
+        for (i, p) in Percentile::iter().enumerate() {
+            rows.push(Row::measurements(reports, p.name(), |report| {
+                report.pubsub_report.as_ref().map(|report| {
+                    (
+                        report.consume_time_percentiles[i].as_secs_f64(),
+                        duration_ms(report.consume_time_percentiles[i]),
                         Goal::SmallerIsBetter,
                     )
                 })
@@ -824,6 +855,13 @@ fn base(reports: &[ReportColumn], table_type: &str) {
 
 fn duration_ms(duration: Duration) -> String {
     format!("{:.3}ms", duration.as_micros() as f32 / 1000.0)
+}
+
+fn duration_ms_opt(duration: Option<Duration>) -> String {
+    match duration {
+        Some(duration) => format!("{:.3}ms", duration.as_micros() as f32 / 1000.0),
+        None => "N/A".to_owned(),
+    }
 }
 
 enum Row {
