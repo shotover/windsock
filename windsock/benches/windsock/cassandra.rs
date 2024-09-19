@@ -143,7 +143,7 @@ struct BenchTaskCassandra {
 impl BenchTask for BenchTaskCassandra {
     async fn run_one_operation(&self) -> Result<(), String> {
         self.session
-            .query("SELECT * FROM system.peers", ())
+            .query_unpaged("SELECT * FROM system.peers", ())
             .await
             .map_err(|err| format!("{err:?}"))
             .map(|_| ())
