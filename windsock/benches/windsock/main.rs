@@ -1,5 +1,5 @@
 use cassandra::{CassandraBench, Topology};
-use scylla::transport::Compression;
+use scylla::frame::Compression;
 use windsock::cloud::NoCloud;
 use windsock::{Bench, Windsock};
 mod cassandra;

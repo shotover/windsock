@@ -1,11 +1,11 @@
 use crate::{
+    Metric,
     bench::Tags,
     filter::Filter,
     report::{MetricIdentifier, Percentile, ReportArchive},
-    Metric,
 };
 use anyhow::{Context, Result};
-use console::{pad_str, pad_str_with, style, Alignment};
+use console::{Alignment, pad_str, pad_str_with, style};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, time::Duration};
 use strum::IntoEnumIterator;

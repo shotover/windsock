@@ -1,10 +1,13 @@
-use crate::{bench::Tags, data::windsock_path, Goal};
-use anyhow::{anyhow, Result};
+use crate::{Goal, bench::Tags, data::windsock_path};
+use anyhow::{Result, anyhow};
+use bincode::config::Configuration;
 use serde::{Deserialize, Serialize};
 use std::{io::ErrorKind, path::PathBuf, time::Duration};
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 use time::OffsetDateTime;
 use tokio::sync::mpsc::UnboundedReceiver;
+
+const BINCODE_CONFIG: Configuration = bincode::config::standard();
 
 /// An individual measurement reported to windsock.
 ///
@@ -277,9 +280,9 @@ impl ReportArchive {
 
     pub fn load(name: &str) -> Result<Self> {
         match std::fs::read(Self::last_run_path().join(name)) {
-            Ok(bytes) => bincode::deserialize(&bytes).map_err(|e|
+            Ok(bytes) => bincode::serde::decode_from_slice(&bytes, BINCODE_CONFIG).map_err(|e|
                 anyhow!(e).context("The bench archive from the previous run is not a valid archive, maybe the format changed since the last run")
-            ),
+            ).map(|x| x.0),
             Err(err) if err.kind() == ErrorKind::NotFound => Err(anyhow!("The bench {name:?} does not exist or was not run in the previous run")),
             Err(err) => Err(anyhow!("The bench {name:?} encountered a file read error {err:?}"))
         }
@@ -287,11 +290,11 @@ impl ReportArchive {
 
     pub fn load_baseline(name: &str) -> Result<Option<Self>> {
         match std::fs::read(Self::baseline_path().join(name)) {
-            Ok(bytes) => bincode::deserialize(&bytes)
+            Ok(bytes) => bincode::serde::decode_from_slice(&bytes, BINCODE_CONFIG)
                 .map_err(|e|
                     anyhow!(e).context("The bench archive from the baseline is not a valid archive, maybe the format changed since the baseline was set")
                 )
-                .map(Some),
+                .map(|x|Some(x.0)),
             Err(err) if err.kind() == ErrorKind::NotFound => Ok(None),
             Err(err) => Err(anyhow!("The bench {name:?} encountered a file read error {err:?}"))
         }
@@ -320,9 +323,12 @@ impl ReportArchive {
     pub fn save(&self) {
         let path = self.path();
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, bincode::serialize(self).unwrap())
-            .map_err(|e| panic!("Failed to write to {path:?} {e}"))
-            .unwrap()
+        std::fs::write(
+            &path,
+            bincode::serde::encode_to_vec(self, BINCODE_CONFIG).unwrap(),
+        )
+        .map_err(|e| panic!("Failed to write to {path:?} {e}"))
+        .unwrap()
     }
 
     pub(crate) fn clear_last_run() {

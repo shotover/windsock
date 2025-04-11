@@ -1,5 +1,5 @@
 use crate::cli::RunArgs;
-use crate::report::{report_builder, Report, ReportArchive};
+use crate::report::{Report, ReportArchive, report_builder};
 use crate::tables::ReportColumn;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -129,7 +129,9 @@ pub trait Bench {
 
     /// Specifies the cloud resources that should be provided to this bench
     fn required_cloud_resources(&self) -> Self::CloudResourcesRequired {
-        unimplemented!("To support running in cloud this bench needs to implement `Bench::required_cloud_resources`");
+        unimplemented!(
+            "To support running in cloud this bench needs to implement `Bench::required_cloud_resources`"
+        );
     }
 
     /// How many cores to assign the async runtime in which the bench runs.
