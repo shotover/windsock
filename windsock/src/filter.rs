@@ -1,5 +1,5 @@
 use crate::bench::Tags;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 struct FilterTag {
     key: String,
@@ -21,7 +21,7 @@ impl Filter {
                 None => {
                     return Err(anyhow!(
                         "Expected exactly one '=' but found no '=' in tag {pair:?}"
-                    ))
+                    ));
                 }
             };
             if iter.next().is_some() {

@@ -15,7 +15,7 @@ pub use report::{
 };
 pub use tables::Goal;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use bench::BenchState;
 use clap::{CommandFactory, Parser};
 use cli::{Command, RunArgs, WindsockArgs};
@@ -36,7 +36,7 @@ impl<ResourcesRequired: Clone, Resources: Clone> Windsock<ResourcesRequired, Res
     ///
     /// Run order:
     /// * Locally: The benches that are run will always be done so in the order they are listed, this allows tricks to avoid recreating DB's for every bench.
-    ///      e.g. the database handle can be put behind a mutex and only resetup when actually neccessary
+    ///   e.g. the database handle can be put behind a mutex and only resetup when actually neccessary
     /// * Cloud: The benches will be run in an order optimized according to its required cloud resources.
     ///
     /// `release_profiles` specifies which cargo profiles Windsock will run under, if a different profile is used windsock will refuse to run.
@@ -171,7 +171,11 @@ impl<ResourcesRequired: Clone, Resources: Clone> Windsock<ResourcesRequired, Res
                     });
                     Ok(())
                 } else {
-                    Err(anyhow!("Specified bench {name:?} was requested to run with the profilers {:?} but it only supports the profilers {:?}", args.profilers, bench.supported_profilers))
+                    Err(anyhow!(
+                        "Specified bench {name:?} was requested to run with the profilers {:?} but it only supports the profilers {:?}",
+                        args.profilers,
+                        bench.supported_profilers
+                    ))
                 }
             }
             None => Err(anyhow!("Specified bench {name:?} does not exist.")),

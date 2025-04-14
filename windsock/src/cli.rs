@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Error};
+use anyhow::{Error, anyhow};
 use clap::{Args, Parser, Subcommand};
 
 const ABOUT: &str = r#"Bench Names:
@@ -186,11 +186,17 @@ impl WindsockArgs {
 
     pub fn nextest_invalid_args(&self) -> Option<Error> {
         if self.format.is_some() && self.list {
-            Some(anyhow!("`--format` only exists for nextest compatibility and is not supported without `--list`"))
+            Some(anyhow!(
+                "`--format` only exists for nextest compatibility and is not supported without `--list`"
+            ))
         } else if self.nocapture && self.exact.is_none() {
-            Some(anyhow!("`--nocapture` only exists for nextest compatibility and is not supported without `--exact`"))
+            Some(anyhow!(
+                "`--nocapture` only exists for nextest compatibility and is not supported without `--exact`"
+            ))
         } else if self.exact.is_some() && !self.nocapture {
-            Some(anyhow!("`--exact` only exists for nextest compatibility and is not supported without `--nocapture`"))
+            Some(anyhow!(
+                "`--exact` only exists for nextest compatibility and is not supported without `--nocapture`"
+            ))
         } else {
             None
         }

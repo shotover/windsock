@@ -1,8 +1,10 @@
 use crate::docker_compose::docker_compose;
 use anyhow::Result;
 use async_trait::async_trait;
-use scylla::SessionBuilder;
-use scylla::{transport::Compression, Session};
+use scylla::{
+    client::{session::Session, session_builder::SessionBuilder},
+    frame::Compression,
+};
 use std::{
     collections::HashMap,
     sync::Arc,
