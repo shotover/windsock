@@ -22,12 +22,12 @@ jobs:
       matrix:
         include:
           - name: Build Release
-            runner: ubuntu-20.04
+            runner: ubuntu-latest
             cargo_flags: --release
             profile: release
 
           - name: Build Debug
-            runner: ubuntu-20.04
+            runner: ubuntu-latest
             cargo_flags:
             profile: debug
 
