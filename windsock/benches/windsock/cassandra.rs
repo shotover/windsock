@@ -52,9 +52,8 @@ impl Bench for CassandraBench {
     fn tags(&self) -> HashMap<String, String> {
         [
             ("db".to_owned(), "cassandra".to_owned()),
-            ("topology".to_owned(), "1".to_owned()),
             self.topology.to_tag(),
-            ("message_type".to_owned(), "write1000bytes".to_owned()),
+            ("query".to_owned(), "read_system_peers".to_owned()),
             (
                 "compression".to_owned(),
                 match &self.compression {
@@ -84,9 +83,18 @@ impl Bench for CassandraBench {
         _profiling: Profiling,
         parameters: BenchParameters,
     ) -> Result<()> {
-        let _docker_compose =
-            docker_compose("benches/windsock/config/cassandra-1-docker-compose.yaml");
-        let address = "127.0.0.1:9042";
+        let _docker_compose = match self.topology {
+            Topology::Single => {
+                docker_compose("benches/windsock/config/cassandra-1-docker-compose.yaml")
+            }
+            Topology::Cluster3 => {
+                docker_compose("benches/windsock/config/cassandra-3-docker-compose.yaml")
+            }
+        };
+        let address = match self.topology {
+            Topology::Single => "127.0.0.1:9042",
+            Topology::Cluster3 => "172.16.1.2:9042",
+        };
 
         self.execute_run(address, &parameters).await;
 
@@ -95,13 +103,14 @@ impl Bench for CassandraBench {
 
     async fn run_bencher(
         &self,
-        _resources: &str,
+        resources: &str,
         parameters: BenchParameters,
         reporter: UnboundedSender<Report>,
     ) {
+        let address = resources;
         let session = Arc::new(
             SessionBuilder::new()
-                .known_nodes(["172.16.1.2:9042"])
+                .known_nodes([address])
                 // We do not need to refresh metadata as there is nothing else fiddling with the topology or schema.
                 // By default the metadata refreshes every 60s and that can cause performance issues so we disable it by using an absurdly high refresh interval
                 .cluster_metadata_refresh_interval(Duration::from_secs(10000000000))
