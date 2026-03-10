@@ -14,16 +14,16 @@ anyhow.workspace = true
 async-trait = "0.1.68"
 bincode.workspace = true
 clap.workspace = true
-console = "0.15.5"
+console = "0.16.2"
 copy_dir = "0.1.2"
 serde = { workspace = true, features = ["derive"] }
-strum = { version = "0.27.0", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 time = { version = "0.3.25", features = ["serde"] }
 tokio.workspace = true
 
 [dev-dependencies]
 scylla = { version = "1.1.0" }
-docker-compose-runner = "0.3.0"
+docker-compose-runner = "0.4.0"
 itertools = "0.14"
 
 [[bench]]

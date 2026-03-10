@@ -763,16 +763,16 @@ fn base(reports: &[ReportColumn], table_type: &str) {
             }
         }
 
-        if let Some(baseline) = &report.baseline {
-            if !baseline.error_messages.is_empty() {
-                let error = format!(
-                    "Bench baseline encountered errors: {}",
-                    report.current.tags.get_name()
-                );
-                println!("{}", style(error).red().bold());
-                for (i, message) in report.current.error_messages.iter().enumerate() {
-                    println!("    {i}.  {message}");
-                }
+        if let Some(baseline) = &report.baseline
+            && !baseline.error_messages.is_empty()
+        {
+            let error = format!(
+                "Bench baseline encountered errors: {}",
+                report.current.tags.get_name()
+            );
+            println!("{}", style(error).red().bold());
+            for (i, message) in report.current.error_messages.iter().enumerate() {
+                println!("    {i}.  {message}");
             }
         }
     }
@@ -813,14 +813,14 @@ fn base(reports: &[ReportColumn], table_type: &str) {
             println!("{}", style(error).red().bold());
         }
 
-        if let Some(baseline) = &report.baseline {
-            if !baseline.running_in_release {
-                let error = format!(
-                    "Baseline bench results invalid! Baseline bench compiled with non-release profile: {}",
-                    baseline.tags.get_name()
-                );
-                println!("{}", style(error).red().bold());
-            }
+        if let Some(baseline) = &report.baseline
+            && !baseline.running_in_release
+        {
+            let error = format!(
+                "Baseline bench results invalid! Baseline bench compiled with non-release profile: {}",
+                baseline.tags.get_name()
+            );
+            println!("{}", style(error).red().bold());
         }
     }
 
@@ -841,13 +841,13 @@ fn base(reports: &[ReportColumn], table_type: &str) {
             }
         }
 
-        if let Some(baseline) = &report.baseline {
-            if !baseline.info_messages.is_empty() {
-                let error = format!("notes for baseline {}", report.current.tags.get_name());
-                println!("{}", style(error).blue().bold());
-                for (i, message) in report.current.info_messages.iter().enumerate() {
-                    println!("    {i}.  {message}");
-                }
+        if let Some(baseline) = &report.baseline
+            && !baseline.info_messages.is_empty()
+        {
+            let error = format!("notes for baseline {}", report.current.tags.get_name());
+            println!("{}", style(error).blue().bold());
+            for (i, message) in report.current.info_messages.iter().enumerate() {
+                println!("    {i}.  {message}");
             }
         }
     }
